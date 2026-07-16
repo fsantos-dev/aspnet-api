@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MiApp.API/MiApp.API.csproj" />
+    <Project Path="src/MiApp.Application/MiApp.Application.csproj" />
+    <Project Path="src/MiApp.Domain/MiApp.Domain.csproj" />
+    <Project Path="src/MiApp.Infrastructure/MiApp.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MiApp.Tests/MiApp.Tests.csproj" />
+  </Folder>
+</Solution>
