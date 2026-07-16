@@ -8,6 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MiApp.Application\MiApp.Application.csproj" />
+    <ProjectReference Include="..\MiApp.Domain\MiApp.Domain.csproj" />
+    <ProjectReference Include="..\MiApp.Infrastructure\MiApp.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
