@@ -2,7 +2,7 @@ using MiApp.Application.Interfaces;
 using MiApp.Application.Services;
 using MiApp.Domain.Interfaces;
 using MiApp.Infrastructure.Repositories;
-
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +11,7 @@ builder.Services.AddControllers();
 
 // 2. Configurar Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 
 // 3. Registrar Dependencias (Inyección de dependencias)
@@ -23,8 +24,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+      app.MapOpenApi();
+    app.MapScalarApiReference(); // mapea /scalar/v1
+    // app.UseSwagger();
+    // app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
