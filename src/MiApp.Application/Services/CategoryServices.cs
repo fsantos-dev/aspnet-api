@@ -33,15 +33,11 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto createDto)
     {
-        if (string.IsNullOrWhiteSpace(createDto.Name)) throw new ArgumentException("El nombre de la categoría es obligatorio");
-
-        var category = new Category
-        {
-            Name = createDto.Name,
-            Description = createDto.Description,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-        };
+    
+        var category = new Category(
+            createDto.Name,
+            createDto.Description
+        );
 
         // 🔹 Guardar usando el repositorio
         var created = await _repository.CreateAsync(category);
@@ -51,15 +47,13 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryDto?> UpdateAsync(int id, UpdateCategoryDto updateDto)
     {
-        // 🔹 Lógica de negocio: validar que el nombre no esté vacío
-        if (string.IsNullOrWhiteSpace(updateDto.Name)) throw new ArgumentException("El nombre de la categoría es obligatorio");
-
+      
         // 🔹 Buscar la entidad existente
         var existing = await _repository.GetByIdAsync(id);
         if (existing == null) return null;
 
         // 🔹 Actualizar los campos permitidos
-        existing.Name = updateDto.Name;
+        existing.Rename(updateDto.Name);
         existing.Description = updateDto.Description;
         existing.UpdatedAt = DateTime.UtcNow;
 

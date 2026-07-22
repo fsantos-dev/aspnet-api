@@ -3,15 +3,38 @@ using MiApp.Application.Services;
 using MiApp.Domain.Interfaces;
 using MiApp.Infrastructure.Repositories;
 using Scalar.AspNetCore;
+using Microsoft.OpenApi;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Agregar controladores
 builder.Services.AddControllers();
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // 2. Configurar Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Servers = new List<OpenApiServer>
+        {
+            new() { Url = "https://curvature-unblessed-elm.ngrok-free.dev" }
+        };
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddSwaggerGen();
 
 // 3. Registrar Dependencias (Inyección de dependencias)
@@ -30,6 +53,7 @@ if (app.Environment.IsDevelopment())
     // app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
