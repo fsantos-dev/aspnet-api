@@ -8,6 +8,16 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Registrar DbContext con la cadena de conexión
+// builder.Services.AddDbContext<AppDbContext>(options =>
+// {
+//     options.UseSqlServer(
+//         builder.Configuration.GetConnectionString("DefaultConnection"));
+// });
+
+
 // 1. Agregar controladores
 builder.Services.AddControllers();
 
@@ -47,7 +57,7 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-      app.MapOpenApi();
+    app.MapOpenApi();
     app.MapScalarApiReference(); // mapea /scalar/v1
     // app.UseSwagger();
     // app.UseSwaggerUI();
