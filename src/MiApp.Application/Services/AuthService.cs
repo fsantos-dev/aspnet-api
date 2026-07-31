@@ -41,7 +41,7 @@ public class AuthService : IAuthService
             Token = token,
             Email = user.Email,
             FullName = user.FullName,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
         };
     }
 
@@ -61,7 +61,14 @@ public class AuthService : IAuthService
 
     private string GenerateJwtToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]!));
+
+         // Leer la configuración desde appsettings.json
+        var secretKey = _configuration["Jwt:SecretKey"];
+        var issuer = _configuration["Jwt:Issuer"];
+        var audience = _configuration["Jwt:Audience"];
+        var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15");
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -72,10 +79,10 @@ public class AuthService : IAuthService
         };
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:issuer"],
-            audience: _configuration["Jwt:audience"],
+            issuer: issuer,
+            audience:audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(15),
+            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
             signingCredentials: creds
         );
 
