@@ -1,54 +1,78 @@
 using MiApp.Domain.Entities;
 using MiApp.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using MiApp.Infrastructure.Data;
 
 namespace MiApp.Infrastructure.Repositories;
 
 
 public class CategoryRepository : ICategoryRepository
 {
-    // Simulación de base de datos en memoria
-    private static List<Category> _categories = new();
-    private static int _nextId = 1;
 
-    public Task<IEnumerable<Category>> GetAllAsync()
+    private readonly AppDbContext _context;
+
+    //inyeccion de dependencias: el repositorio recibe el dbcontext
+    public CategoryRepository(AppDbContext context)
     {
-        return Task.FromResult(_categories.AsEnumerable());
+        _context = context;
     }
 
-    public Task<Category?> GetByIdAsync(int id)
+
+    public async Task<IEnumerable<Category>> GetAllAsync()
     {
-        var category = _categories.FirstOrDefault(c => c.Id == id);
-        return Task.FromResult(category);
+        return await _context.Categories.ToListAsync();
     }
 
-    public Task<Category> CreateAsync(Category category)
+
+    public async Task<Category?> GetByIdAsync(int id)
     {
-        category.Id = _nextId++;
-        _categories.Add(category);
-        return Task.FromResult(category);
+        return await _context.Categories.FindAsync(id);
     }
 
-    public Task<Category?> UpdateAsync(Category category)
+    public async Task<Category> CreateAsync(Category category)
     {
-        var existing = _categories.FirstOrDefault(c => c.Id == category.Id);
-        if(existing == null) return Task.FromResult<Category?>(null);
+        // Agregamos la entidad al contexto
+        await _context.Categories.AddAsync(category);
 
+        // Guardamos cambios en la base de datos (Ejecuta INSERT)
+        await _context.SaveChangesAsync();
+
+        // Retornamos el valor, aqui el ID se genera automáticamente en la base de datos
+        return category;
+    }
+
+    public async Task<Category?> UpdateAsync(Category category)
+    {
+        //Buscar la entidad existente en la base de datos
+        var existing = await _context.Categories.FindAsync(category.Id);
+
+        if(existing == null) return null;
+
+        //Actualizar los campos permitidos
         existing.Name = category.Name;
         existing.Description = category.Description;
-        existing.IsActive = category.IsActive;
-        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedAt = category.UpdatedAt;
 
+        // Guardar los cambios (Ejecuta UPDATE)
+        await _context.SaveChangesAsync();
 
-        return Task.FromResult<Category?>(existing);
+        return existing;
     }
 
-    public Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id)
     {
-        var category = _categories.FirstOrDefault(c => c.Id == id);
-        if(category == null) return Task.FromResult(false);
+        // Buscar la entidad en la base de datos
+        var category = await _context.Categories.FindAsync(id);
+        if(category == null) return false;
 
-        _categories.Remove(category);
-        return Task.FromResult(true);
+        // Marcar la entidad para eliminacion
+        _context.Categories.Remove(category);
+
+        // Guarda cambios (Ejecuta DELETE)
+        await _context.SaveChangesAsync();
+
+        return true;
     }
+
 
 }

@@ -12,7 +12,8 @@ public class AppDbContext : DbContext
     }
 
     //Dbset representa una tabla en la base de datos
-    public DbSet<Category> categories {get; set;}
+    public DbSet<Category> Categories {get; set;}
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,6 +24,10 @@ public class AppDbContext : DbContext
         // - Restricciones (ej: unicidad)
         // - Relaciones (ej: Category 1:N Product)
 
+        //AQUI se pueden construir todas las entidades con su respectivo modelBuilder cada uno 
+        // o hay otra forma que es tener una carpeta de configuraciones para cada una de las entidades y aqui se llama la linea 
+        //que accede a todas las configuraciones
+
         modelBuilder.Entity<Category>(entity =>
         {
             // Indicar que la tabla se llamará "Categories" (por defecto sería "Category")
@@ -32,7 +37,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
 
             //Configurar que el Id sea generado por la base de datos (autoincrement)
-            entity.Property(e => e.Id).UseIdentityColumn();
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
             //Configurar que Name sea obligatorio y tenga un maximo de 100 caracteres
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
@@ -44,7 +49,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
 
             //Configurar que CreatedAt se asigna automáticamente con la fecha UTC
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            //aqui es mejor que .NET lo genere solo por que esta funcion solo sirve para sqlserver y no para cualquier motor de base de datos
+            // entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
         });
 
@@ -52,37 +58,4 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
     }
 
-
-//  protected override void OnModelCreating(ModelBuilder modelBuilder)
-//     {
-//         // Configurar la tabla Categories
-//         modelBuilder.Entity<Category>(entity =>
-//         {
-//             // Nombre de la tabla en SQL Server
-//             entity.ToTable("Categories");
-
-//             // Configurar la clave primaria
-//             entity.HasKey(c => c.Id);
-
-//             // Configurar propiedades
-//             entity.Property(c => c.Id)
-//                 .ValueGeneratedOnAdd() // Autoincrementable
-//                 .UseIdentityColumn(); // Para SQL Server
-
-//             entity.Property(c => c.Name)
-//                 .IsRequired()
-//                 .HasMaxLength(100);
-
-//             entity.Property(c => c.Description)
-//                 .HasMaxLength(500);
-
-//             entity.Property(c => c.CreatedAt)
-//                 .IsRequired();
-
-//             entity.Property(c => c.UpdatedAt)
-//                 .IsRequired(false); // Puede ser NULL
-//         });
-
-//         base.OnModelCreating(modelBuilder);
-//     }
 }
