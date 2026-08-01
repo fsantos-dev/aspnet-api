@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using MiApp.Application.Dtos;
 using MiApp.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization; // ⬅️ Importante: agregar este using
 
 namespace MiApp.API.Controllers;
 
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class CategoriesController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
@@ -20,6 +22,7 @@ public class CategoriesController : ControllerBase
 
     // GET: api/categories
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var categories = await _categoryService.GetAllAsync();
@@ -28,6 +31,7 @@ public class CategoriesController : ControllerBase
 
      // GET: api/categories/{id}
      [HttpGet("{id}")]
+     [AllowAnonymous]
      public async Task<IActionResult> GetById(int id)
     {
         var category = await _categoryService.GetByIdAsync(id);

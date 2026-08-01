@@ -28,7 +28,6 @@ public class AuthController : ControllerBase
         if(response == null) return Unauthorized("Credenciales Invalidas");
 
         //Si son válidas, devolver el token
-
         return Ok(response);
     }
 }
