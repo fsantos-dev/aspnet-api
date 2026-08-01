@@ -11,7 +11,7 @@ public class UserRepository : IUserRepository
        {
            Id = 1,
            Email = "admin@example.com",
-           PasswordHash = "12345",
+           PasswordHash = "WZRHGrsBESr8wYFZ9sx0tPURuZgG2lmzyvWpwXPKz8U=",
            FullName = "Admin User",
            IsActive = true,
            CreatedAt = DateTime.UtcNow,
