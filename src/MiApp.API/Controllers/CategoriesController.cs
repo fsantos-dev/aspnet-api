@@ -45,15 +45,10 @@ public class CategoriesController : ControllerBase
     {
         if (!ModelState.IsValid)  return BadRequest(ModelState);
 
-        try
-        {
+  
             var created = await _categoryService.CreateAsync(createDto);
             return CreatedAtAction(nameof(GetById), new { id = created.Id}, created);
-        }
-        catch(ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        
     }
 
     // PUT: api/categories/{id}
