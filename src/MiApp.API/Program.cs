@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using MiApp.API.Middleware;
 using Microsoft.AspNetCore.Mvc;
+using MiApp.Application.Mappings;
 
 //Esto es para hacer un commit de prueba y probar pull request
 
@@ -122,9 +123,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// 3.4 Configurar AutoMapper (escanea los mappings/perfiles en la capa de aplicacion)
+builder.Services.AddAutoMapper(cfg => { }, typeof(UserProfile).Assembly);
+
 
 // 4. Agregar CORS
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
