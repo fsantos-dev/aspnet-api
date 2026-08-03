@@ -32,7 +32,7 @@ public class LoggingMiddleware
             request.Body.Position = 0; // resetear para que el resto del pipeline lo pueda leer
         }
 
-        _logger.LogInformation("→ Inicia {Method} {Path}{QueryString} | Body: {Cyan}{RequestBody}{Reset}",
+        _logger.LogInformation("→ Inicia {Method} {Path}{QueryString} | Request: {Cyan}{RequestBody}{Reset}",
             request.Method, request.Path, request.QueryString, Cyan, requestBody, Reset);
 
         // Interceptar el body del RESPONSE para poder leerlo después

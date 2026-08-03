@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MiApp.Application.Dtos;
 using MiApp.Application.Interfaces;
-using Microsoft.AspNetCore.Identity.Data;
-using MiApp.APplication.Dtos;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MiApp.API.Controllers;
 
@@ -15,7 +14,7 @@ public class AuthController : ControllerBase
     public AuthController(IAuthService authService)
     {
         _authService = authService;
-    }
+    }   
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
@@ -25,9 +24,17 @@ public class AuthController : ControllerBase
         //Autenticar
         var response = await _authService.LoginAsync(request);
 
-        if(response == null) return Unauthorized("Credenciales Invalidas");
-
         //Si son válidas, devolver el token
         return Ok(response);
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+    {
+        if(!ModelState.IsValid) return BadRequest(ModelState);
+
+        var result = await _authService.RegisterAsync(request);
+
+        return Ok(result);
     }
 }

@@ -1,4 +1,4 @@
-namespace MiApp.APplication.Dtos;
+namespace MiApp.Application.Dtos;
 
 /// DTO para recibir las credenciales de login desde el cliente (Angular, Postman, etc.)
 

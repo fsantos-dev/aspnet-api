@@ -29,13 +29,12 @@ public class CategoriesController : ControllerBase
         return Ok(categories);
     }
 
-     // GET: api/categories/{id}
-     [HttpGet("{id}")]
-     [AllowAnonymous]
-     public async Task<IActionResult> GetById(int id)
+    // GET: api/categories/{id}
+    [HttpGet("{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetById(int id)
     {
         var category = await _categoryService.GetByIdAsync(id);
-        if(category == null) return NotFound($"No se encontro la categoria con el ID {id}");
         return Ok(category);
     }
 
@@ -43,39 +42,27 @@ public class CategoriesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCategoryDto createDto)
     {
-        if (!ModelState.IsValid)  return BadRequest(ModelState);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var created = await _categoryService.CreateAsync(createDto);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
 
-  
-            var created = await _categoryService.CreateAsync(createDto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id}, created);
-        
     }
 
     // PUT: api/categories/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryDto updateDto)
     {
-        if(!ModelState.IsValid) return BadRequest(ModelState);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var updated = await _categoryService.UpdateAsync(id, updateDto);
+        return Ok(updated);
 
-        try
-        {
-            var updated = await _categoryService.UpdateAsync(id, updateDto);
-            if(updated == null) return NotFound($"No se encontro la categoria con el ID {id}");
-            return Ok(updated);
-        }
-        catch(ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
     }
 
     // DELETE: api/categories/{id}
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _categoryService.DeleteAsync(id);
-        if (!deleted) return NotFound($"No se encontro la categoria con el ID {id}");
-
+        await _categoryService.DeleteAsync(id);
         return NoContent();
     }
 

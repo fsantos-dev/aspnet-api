@@ -1,33 +1,30 @@
 using MiApp.Domain.Entities;
 using MiApp.Domain.Interfaces;
+using MiApp.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace MiApp.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private static List<User> _users = new ()
-    {
-       new User
-       {
-           Id = 1,
-           Email = "admin@example.com",
-           PasswordHash = "WZRHGrsBESr8wYFZ9sx0tPURuZgG2lmzyvWpwXPKz8U=",
-           FullName = "Admin User",
-           IsActive = true,
-           CreatedAt = DateTime.UtcNow,
-       }
-    };
 
-    public Task<User?> GetByEmailAsync(string email)
+    private readonly AppDbContext _context;
+
+    public UserRepository(AppDbContext context)
     {
-        var user = _users.FirstOrDefault(user => user.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(user);
+        _context = context;
     }
 
-    public Task<User> CreateAsync(User user)
+    public async Task<User?> GetByEmailAsync(string email)
     {
-        user.Id = _users.Count + 1;
-        _users.Add(user);
-        return Task.FromResult(user);
+        return await  _context.Users.FirstOrDefaultAsync(user => user.Email == email);
+        
+    }
+
+    public async Task<User> CreateAsync(User user)
+    {
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+        return user;
     }
 }

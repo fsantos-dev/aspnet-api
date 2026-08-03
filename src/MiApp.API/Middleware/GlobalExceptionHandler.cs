@@ -36,10 +36,20 @@ public class GlobalExceptionHandler : IExceptionHandler
                 "Recurso no encontrado",
                 exception.Message),
 
+            InvalidOperationException => (
+                HttpStatusCode.Conflict,
+                "Conflicto",
+                exception.Message),
+
             UnauthorizedAccessException => (
                 HttpStatusCode.Unauthorized,
                 "No autorizado",
                 "No tienes permisos para realizar esta acción."),
+
+            InvalidCredentialsException => (
+                HttpStatusCode.Unauthorized,
+                "No autorizado",
+                exception.Message),
 
             _ => (
                 HttpStatusCode.InternalServerError,

@@ -28,7 +28,7 @@ public class CategoryRepositoryMemory : ICategoryRepository
         return Task.FromResult(category);
     }
 
-    public Task<Category?> UpdateAsync(Category category)
+    public Task UpdateAsync(Category category)
     {
         var existing = _categories.FirstOrDefault(c => c.Id == category.Id);
         if(existing == null) return Task.FromResult<Category?>(null);
@@ -42,7 +42,7 @@ public class CategoryRepositoryMemory : ICategoryRepository
         return Task.FromResult<Category?>(existing);
     }
 
-    public Task<bool> DeleteAsync(int id)
+    public Task DeleteAsync(int id)
     {
         var category = _categories.FirstOrDefault(c => c.Id == id);
         if(category == null) return Task.FromResult(false);
