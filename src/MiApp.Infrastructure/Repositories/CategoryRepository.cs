@@ -41,37 +41,20 @@ public class CategoryRepository : ICategoryRepository
         return category;
     }
 
-    public async Task<Category?> UpdateAsync(Category category)
+    public async Task UpdateAsync(Category category)
     {
-        //Buscar la entidad existente en la base de datos
-        var existing = await _context.Categories.FindAsync(category.Id);
-
-        if(existing == null) return null;
-
-        //Actualizar los campos permitidos
-        existing.Name = category.Name;
-        existing.Description = category.Description;
-        existing.UpdatedAt = category.UpdatedAt;
-
         // Guardar los cambios (Ejecuta UPDATE)
         await _context.SaveChangesAsync();
-
-        return existing;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
         // Buscar la entidad en la base de datos
         var category = await _context.Categories.FindAsync(id);
-        if(category == null) return false;
-
         // Marcar la entidad para eliminacion
-        _context.Categories.Remove(category);
-
+        _context.Categories.Remove(category!);
         // Guarda cambios (Ejecuta DELETE)
         await _context.SaveChangesAsync();
-
-        return true;
     }
 
 

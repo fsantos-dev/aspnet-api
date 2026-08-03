@@ -4,12 +4,9 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MiApp.Application.Dtos;
-using MiApp.Application.Interfaces;
 using MiApp.Domain.Entities;
 using MiApp.Domain.Interfaces;
-using MiApp.APplication.Dtos;
-using System.Net.Cache;
-using System.Runtime.InteropServices.Marshalling;
+using MiApp.Application.Interfaces;
 
 namespace MiApp.Application.Services;
 
@@ -28,10 +25,10 @@ public class AuthService : IAuthService
     {
         // 1. Buscar usuario por email usando el repositorio
         var user = await _userRepository.GetByEmailAsync(request.Email);
-        if(user == null) return null;
+        if (user == null) throw new InvalidCredentialsException("Credenciales inválidas");
 
-         // 2. Validar contraseña (en memoria, comparación directa. En BD usaríamos hash)
-        if(!VerifyPassword(request.Password, user.PasswordHash)) return null;
+        // 2. Validar contraseña (en memoria, comparación directa. En BD usaríamos hash)
+        if (!VerifyPassword(request.Password, user.PasswordHash)) throw new InvalidCredentialsException("Credenciales inválidas");
 
         // 3. Generar token JWT
         var token = GenerateJwtToken(user);
@@ -43,6 +40,40 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
         };
+    }
+
+    public async Task<LoginResponseDto?> RegisterAsync(RegisterRequestDto request)
+    {
+
+        //1. Validar que el email no este registrado
+        var userExisting = await _userRepository.GetByEmailAsync(request.Email);
+        if (userExisting != null) throw new InvalidOperationException($"El email '{request.Email}' ya está registrado");
+
+        //2. Crear el usuario
+        var user = new User
+        {
+            Email = request.Email,
+            PasswordHash = HashPassword(request.Password),
+            FullName = request.FullName,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        //3. Guardar en la base de datos
+        var created = await _userRepository.CreateAsync(user);
+
+        //4. Generar el token JWT (Login automatico despues del registro)
+        var token = GenerateJwtToken(created);
+
+        //5. Devolver la respuesta
+        return new LoginResponseDto
+        {
+            Token = token,
+            Email = created.Email,
+            FullName = created.FullName,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
+        };
+
     }
 
     private bool VerifyPassword(string password, string passwordHash)
@@ -62,7 +93,7 @@ public class AuthService : IAuthService
     private string GenerateJwtToken(User user)
     {
 
-         // Leer la configuración desde appsettings.json
+        // Leer la configuración desde appsettings.json
         var secretKey = _configuration["Jwt:SecretKey"];
         var issuer = _configuration["Jwt:Issuer"];
         var audience = _configuration["Jwt:Audience"];
@@ -80,7 +111,7 @@ public class AuthService : IAuthService
 
         var token = new JwtSecurityToken(
             issuer: issuer,
-            audience:audience,
+            audience: audience,
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
             signingCredentials: creds

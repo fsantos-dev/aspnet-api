@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using MiApp.API.Middleware;
+using Microsoft.AspNetCore.Mvc;
 
 //Esto es para hacer un commit de prueba y probar pull request
 
@@ -55,7 +57,48 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = issuer,
         ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+
+        
     };
+
+    options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse(); // evita que el middleware default escriba su propia respuesta
+                
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                var problem = new ProblemDetails
+                {
+                    Title = "No autorizado",
+                    Status = StatusCodes.Status401Unauthorized,
+                    Detail = "No se proporcionó un token válido",
+                    Instance = context.Request.Path,
+                    Type = $"https://httpstatuses.com/{(int)StatusCodes.Status401Unauthorized}"
+                };
+
+
+                await context.Response.WriteAsJsonAsync(problem);
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+
+                var problem = new ProblemDetails
+                {
+                    Title = "Prohibido",
+                    Status = StatusCodes.Status403Forbidden,
+                    Detail = "No tienes permisos para realizar esta acción",
+                    Instance = context.Request.Path,
+                    Type = $"https://httpstatuses.com/{(int)StatusCodes.Status403Forbidden}"
+                };
+
+                await context.Response.WriteAsJsonAsync(problem);
+            }
+        };
 });
 builder.Services.AddAuthorization();
 
@@ -76,6 +119,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 
 // 4. Agregar CORS
 
@@ -83,9 +129,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -101,8 +148,10 @@ if (app.Environment.IsDevelopment())
     // app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseExceptionHandler();
+app.UseCustomPipeline();
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
