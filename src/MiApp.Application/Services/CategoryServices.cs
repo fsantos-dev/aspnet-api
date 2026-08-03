@@ -1,5 +1,6 @@
 using MiApp.Application.Dtos;
 using MiApp.Application.Interfaces;
+using MiApp.Application.Mappings;
 using MiApp.Domain.Entities;
 using MiApp.Domain.Interfaces;
 namespace MiApp.Application.Services;
@@ -21,14 +22,14 @@ public class CategoryService : ICategoryService
     public async Task<IEnumerable<CategoryDto>> GetAllAsync()
     {
         var categories = await _repository.GetAllAsync();
-        return categories.Select(c => MapToDto(c));
+        return categories.Select(c => CategoryMapper.toDto(c));
     }
 
     public async Task<CategoryDto> GetByIdAsync(int id)
     {
         var category = await _repository.GetByIdAsync(id);
         if (category is null) throw new KeyNotFoundException($"No se encontró la categoría con el ID {id}");
-        return MapToDto(category);
+        return CategoryMapper.toDto(category);
     }
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto createDto)
@@ -41,7 +42,7 @@ public class CategoryService : ICategoryService
 
         // 🔹 Guardar usando el repositorio
         var created = await _repository.CreateAsync(category);
-        return MapToDto(created);
+        return CategoryMapper.toDto(created);
 
     }
 
@@ -59,7 +60,7 @@ public class CategoryService : ICategoryService
 
         // 🔹 Guardar cambios usando el repositorio
         await _repository.UpdateAsync(existing);
-        return MapToDto(existing);
+        return CategoryMapper.toDto(existing);
     }
 
     public async Task DeleteAsync(int id)
@@ -70,16 +71,5 @@ public class CategoryService : ICategoryService
     }
 
 
-    private static CategoryDto MapToDto(Category category)
-    {
-        return new CategoryDto
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Description = category.Description,
-            IsActive = category.IsActive,
-            CreatedAt = category.CreatedAt,
-        };
-    }
 
 }

@@ -7,6 +7,7 @@ using MiApp.Application.Dtos;
 using MiApp.Domain.Entities;
 using MiApp.Domain.Interfaces;
 using MiApp.Application.Interfaces;
+using AutoMapper;
 
 namespace MiApp.Application.Services;
 
@@ -14,11 +15,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
+    private readonly IMapper _mapper;
 
-    public AuthService(IUserRepository userRepository, IConfiguration configuracion)
+    public AuthService(IUserRepository userRepository, IConfiguration configuracion, IMapper mapper)
     {
         _userRepository = userRepository;
         _configuration = configuracion;
+        _mapper = mapper;
     }
 
     public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
@@ -33,13 +36,28 @@ public class AuthService : IAuthService
         // 3. Generar token JWT
         var token = GenerateJwtToken(user);
 
-        return new LoginResponseDto
-        {
-            Token = token,
-            Email = user.Email,
-            FullName = user.FullName,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
-        };
+
+        //4. Devolver la respuesta
+
+
+        //MAPEO MANUAL
+        // return new LoginResponseDto
+        // {
+        //     Token = token,
+        //     Email = user.Email,
+        //     FullName = user.FullName,
+        //     ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
+        // };
+
+         //AUTOMAPPER
+        var response = _mapper.Map<LoginResponseDto>(user);
+
+        response.Token = token;
+        response.ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"));
+
+        return response;
+
+
     }
 
     public async Task<LoginResponseDto?> RegisterAsync(RegisterRequestDto request)
@@ -66,13 +84,28 @@ public class AuthService : IAuthService
         var token = GenerateJwtToken(created);
 
         //5. Devolver la respuesta
-        return new LoginResponseDto
-        {
-            Token = token,
-            Email = created.Email,
-            FullName = created.FullName,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
-        };
+
+
+        //MAPEO MANUAL
+        // return new LoginResponseDto
+        // {
+        //     Token = token,
+        //     Email = created.Email,
+        //     FullName = created.FullName,
+        //     ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
+        // };
+
+        //AUTOMAPPER
+        var response = _mapper.Map<LoginResponseDto>(created);
+
+        response.Token = token;
+        response.ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"));
+
+        return response;
+
+
+
+ 
 
     }
 
