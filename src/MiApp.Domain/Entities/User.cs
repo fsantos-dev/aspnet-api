@@ -16,4 +16,6 @@ public  class User
 
     public DateTime CreatedAt {get; set;} = DateTime.UtcNow;
 
+    public ICollection<Category> Categories {get; set;} = new List<Category>();
+
 }

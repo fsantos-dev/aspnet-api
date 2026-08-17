@@ -1,4 +1,5 @@
 using System.Net;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,7 +27,7 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         var (statusCode, title, detail) = exception switch
         {
-            ArgumentException => (
+            ArgumentException or ValidationException => (
                 HttpStatusCode.BadRequest,
                 "Solicitud inválida",
                 exception.Message),

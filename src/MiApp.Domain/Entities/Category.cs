@@ -25,6 +25,10 @@ public class Category
     //Fecha de ultima Actualización. Es opcional (nullable) por que al crearse no se ha actualizado.
     public DateTime? UpdatedAt { get; set; }
 
+    public int UserId {get; set;}
+
+    public User User { get; set;} = null!;
+
 
      public Category(string name, string? description)
     {

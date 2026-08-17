@@ -79,7 +79,7 @@ UnitOfWork
 
 ## Recomendación
 
-En .NET moderno muchos proyectos usan únicamente repositorios porque `DbContext` ya implementa gran parte del patrón Unit of Work.
+En .NET moderno muchos proyectos usan únicamente repositorios porque `DbContext` ya implementa gran parte del patrón Unit of Work. Entonces se puede usar service -> repositorio -> dbcontext o incluso service -> dbcontext sin repositorio cuando las operaciones son sencillas, si no usamos dbcontext usamos service -> unitOfWork -> repositorios
 
 ---
 
@@ -339,6 +339,214 @@ Buenas prácticas:
 
 ---
 
+# 16. Validación de datos
+
+Existen tres enfoques principales para validar los datos que llegan a una aplicación ASP.NET Core.
+
+## ✅ Opción 1 - Validaciones Manuales
+
+Consiste en validar directamente dentro del servicio o caso de uso.
+
+```csharp
+if (string.IsNullOrWhiteSpace(dto.Name))
+    throw new ArgumentException("El nombre es obligatorio.");
+
+if (dto.Name.Length > 100)
+    throw new ArgumentException("El nombre no puede superar los 100 caracteres.");
+```
+
+### Ventajas
+
+- Muy sencillo de entender.
+- No requiere librerías adicionales.
+- Ideal para aprender los fundamentos.
+
+### Desventajas
+
+- Se repite mucho código.
+- Mezcla la lógica de validación con la lógica del negocio.
+- Difícil de mantener en proyectos grandes.
+
+---
+
+## ✅ Opción 2 - Data Annotations
+
+ASP.NET Core permite validar utilizando atributos sobre los DTOs.
+
+```csharp
+public class CreateCategoryDto
+{
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    [MaxLength(300)]
+    public string? Description { get; set; }
+}
+```
+
+### Ventajas
+
+- Integración nativa con ASP.NET Core.
+- Muy poco código.
+- Adecuado para proyectos pequeños o medianos.
+
+### Desventajas
+
+- Los DTOs terminan llenos de atributos.
+- Las reglas complejas son difíciles de expresar.
+- Las validaciones quedan acopladas al DTO.
+
+---
+
+## ✅ Opción 3 - FluentValidation
+
+Consiste en crear una clase exclusiva para validar cada DTO.
+
+```csharp
+public class CreateCategoryValidator : AbstractValidator<CreateCategoryDto>
+{
+    public CreateCategoryValidator()
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(100);
+
+        RuleFor(x => x.Description)
+            .MaximumLength(300);
+    }
+}
+```
+
+### Ventajas
+
+- Mantiene separadas las responsabilidades.
+- Código limpio y fácil de mantener.
+- Muy flexible para reglas complejas.
+- Excelente integración con ASP.NET Core.
+- Muy utilizado en proyectos empresariales modernos.
+
+### Desventajas
+
+- Requiere instalar una librería externa.
+- Agrega una pequeña curva de aprendizaje.
+
+---
+
+## Validaciones del dominio
+
+Las validaciones anteriores protegen principalmente la **entrada de datos** (DTOs).
+
+Sin embargo, las **reglas de negocio** deben protegerse dentro de las entidades del dominio.
+
+```csharp
+public void Rename(string newName)
+{
+    if (string.IsNullOrWhiteSpace(newName))
+        throw new DomainException("El nombre es obligatorio.");
+
+    Name = newName;
+}
+```
+
+Esto garantiza que la entidad nunca pueda quedar en un estado inválido, incluso si es creada o modificada desde un proceso interno, un Worker, una prueba unitaria u otro componente que no pase por un controlador HTTP.
+
+---
+
+## Recomendación
+
+Para proyectos empresariales modernos con ASP.NET Core y Clean Architecture se suele utilizar la siguiente combinación:
+
+- **FluentValidation** para validar los DTOs que llegan a la aplicación.
+- **Entidades del dominio** para proteger las invariantes o reglas de negocio.
+- **Entity Framework Core** para reforzar restricciones en la base de datos (índices únicos, longitudes máximas, claves foráneas, etc.).
+
+Esta combinación proporciona una arquitectura limpia, mantenible y robusta.
+
+---
+
+# 15. TIPS DE CODIGO
+
+- [FromBody] ya no es necesario en los parametros cuano usamos apicontroller
+- Podemos obviar el contructor y usar primary constructor esto ahorra codigo
+- cuando tenemos una sola dependencia podemos obviar los corchetes y usar => 
+- Podemos usar IActionResult o ActionResult<CategoryDto> para mas legibilidad del codigo
+
+Buenas prácticas:
+
+- Utilizar siempre HTTPS.
+- Encriptar información sensible.
+- Nunca almacenar contraseñas en texto plano.
+- Utilizar hash seguro para contraseñas (por ejemplo, BCrypt o el `PasswordHasher` de ASP.NET Core Identity).
+- Validar y sanitizar la información recibida.
+- Proteger datos sensibles tanto del cliente al servidor como del servidor al cliente cuando el negocio lo requiera.
+
+---
+# 15. ENTITIS
+Tiene propiedades que representan datos -> columnas
+Y propiedades que representan relaciones -> navegacion para acceder mas facil a los datoos con EF Core
+
+
+# 16. AGREGAR NUEVAS COLUMNAS CUANDO LA APP YA ESTA EN PRODUCCION
+Aqui toca tener cuidado con todos los escenarios por que la aplicacion ya esta en produccion y si agregamos una nueva columna toca revisar que valor se le va dejar o como peude afectar el cambio y tomar una decision
+
+
+La regla que quiero que te quede
+
+Cuando agregues cualquier campo a una tabla existente, hazte estas 4 preguntas:
+
+1. ¿Puede ser NULL?
+¿Es obligatorio?
+2. ¿Qué valor tendrán los registros existentes?
+¿Default?
+¿Se puede calcular?
+¿Se puede obtener de otra tabla?
+¿Hay que preguntarle al negocio?
+3. ¿Cuántos registros hay?
+1.000 registros
+
+es muy diferente de:
+
+500.000.000 registros
+4. ¿El cambio puede bloquear o afectar producción?
+
+Esto depende del motor de BD, tamaño de tabla, índices, tipo de alteración, versión del motor, estrategia de despliegue, etc.
+
+Por eso hay una escala aproximada
+Campo nuevo con DEFAULT
+        ↓
+🟢 Generalmente sencillo
+
+
+Campo nullable
+        ↓
+🟢 Generalmente sencillo
+
+
+Campo obligatorio + datos existentes
+        ↓
+🟡 Necesita planificación
+
+
+Campo derivado de otros datos
+        ↓
+🟡/🔴 Depende
+
+
+Nueva FK con datos existentes
+        ↓
+🟡/🔴 Más delicado
+
+
+Cambiar/eliminar una columna utilizada
+        ↓
+🔴 Potencialmente peligroso
+
+
+Cambiar estructura de una tabla enorme
+        ↓
+🔴 Requiere planificación seria
+
 # 📌 Resumen
 
 | Tema | Opciones |
@@ -354,6 +562,8 @@ Buenas prácticas:
 | LINQ | Memoria / Base de datos |
 | Secretos | Vault o Variables de Entorno |
 | Seguridad | HTTPS + Hash + Encriptación cuando aplique |
+| Validación | Manual / Data Annotations / FluentValidation + Reglas de Dominio |
+
 
 ---
 

@@ -8,6 +8,7 @@ using MiApp.Domain.Entities;
 using MiApp.Domain.Interfaces;
 using MiApp.Application.Interfaces;
 using AutoMapper;
+using FluentValidation;
 
 namespace MiApp.Application.Services;
 
@@ -15,26 +16,41 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
+
+    private ITokenService _tokenService;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly IMapper _mapper;
 
-    public AuthService(IUserRepository userRepository, IConfiguration configuracion, IMapper mapper)
+    private readonly IValidator<RegisterRequestDto> _registerValidator;
+
+    private readonly IValidator<LoginRequestDto> _loginValidator;
+
+    public AuthService(IUserRepository userRepository, IConfiguration configuracion,
+    IMapper mapper, IValidator<RegisterRequestDto> registerValidator, IValidator<LoginRequestDto> loginValidator, IPasswordHasher passwordHasher, ITokenService tokenService)
     {
         _userRepository = userRepository;
         _configuration = configuracion;
         _mapper = mapper;
+        _registerValidator = registerValidator;
+        _loginValidator = loginValidator;
+        _passwordHasher = passwordHasher;
+        _tokenService = tokenService;
     }
 
     public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
     {
+
+        var validationResult = await _loginValidator.ValidateAsync(request);
+        if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
         // 1. Buscar usuario por email usando el repositorio
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user == null) throw new InvalidCredentialsException("Credenciales inválidas");
 
         // 2. Validar contraseña (en memoria, comparación directa. En BD usaríamos hash)
-        if (!VerifyPassword(request.Password, user.PasswordHash)) throw new InvalidCredentialsException("Credenciales inválidas");
+        if (!_passwordHasher.Verify(request.Password, user.PasswordHash)) throw new InvalidCredentialsException("Credenciales inválidas");
 
         // 3. Generar token JWT
-        var token = GenerateJwtToken(user);
+        var token = _tokenService.GenerateToken(user);
 
 
         //4. Devolver la respuesta
@@ -49,7 +65,7 @@ public class AuthService : IAuthService
         //     ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15"))
         // };
 
-         //AUTOMAPPER
+        //AUTOMAPPER
         var response = _mapper.Map<LoginResponseDto>(user);
 
         response.Token = token;
@@ -62,6 +78,8 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponseDto?> RegisterAsync(RegisterRequestDto request)
     {
+        var validationResult = await _registerValidator.ValidateAsync(request);
+        if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
 
         //1. Validar que el email no este registrado
         var userExisting = await _userRepository.GetByEmailAsync(request.Email);
@@ -71,7 +89,7 @@ public class AuthService : IAuthService
         var user = new User
         {
             Email = request.Email,
-            PasswordHash = HashPassword(request.Password),
+            PasswordHash = _passwordHasher.Hash(request.Password),
             FullName = request.FullName,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -81,7 +99,7 @@ public class AuthService : IAuthService
         var created = await _userRepository.CreateAsync(user);
 
         //4. Generar el token JWT (Login automatico despues del registro)
-        var token = GenerateJwtToken(created);
+        var token = _tokenService.GenerateToken(created);
 
         //5. Devolver la respuesta
 
@@ -103,53 +121,9 @@ public class AuthService : IAuthService
 
         return response;
 
-
-
- 
-
-    }
-
-    private bool VerifyPassword(string password, string passwordHash)
-    {
-        return HashPassword(password) == passwordHash;
-    }
-
-    private string HashPassword(string password)
-    {
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(password);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
     }
 
 
-    private string GenerateJwtToken(User user)
-    {
 
-        // Leer la configuración desde appsettings.json
-        var secretKey = _configuration["Jwt:SecretKey"];
-        var issuer = _configuration["Jwt:Issuer"];
-        var audience = _configuration["Jwt:Audience"];
-        var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15");
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
 }

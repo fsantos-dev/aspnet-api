@@ -1,3 +1,4 @@
+using FluentValidation;
 using MiApp.Application.Dtos;
 using MiApp.Application.Interfaces;
 using MiApp.Application.Mappings;
@@ -13,15 +14,19 @@ namespace MiApp.Application.Services;
 public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _repository;
+    private readonly IValidator<CreateCategoryDto> _createValidator;
+    private readonly IValidator<UpdateCategoryDto> _updatedValidator;
 
-    public CategoryService(ICategoryRepository repository)
+    public CategoryService(ICategoryRepository repository, IValidator<CreateCategoryDto> createValidator, IValidator<UpdateCategoryDto> updateValidator)
     {
         _repository = repository;
+        _createValidator = createValidator;
+        _updatedValidator = updateValidator;
     }
 
-    public async Task<IEnumerable<CategoryDto>> GetAllAsync()
+    public async Task<IEnumerable<CategoryDto>> GetAllAsync(int id)
     {
-        var categories = await _repository.GetAllAsync();
+        var categories = await _repository.GetAllAsync(id);
         return categories.Select(c => CategoryMapper.toDto(c));
     }
 
@@ -35,10 +40,13 @@ public class CategoryService : ICategoryService
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto createDto)
     {
 
+        var validationResult = await _createValidator.ValidateAsync(createDto);
+        if(!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
         var category = new Category(
             createDto.Name,
             createDto.Description
         );
+
 
         // 🔹 Guardar usando el repositorio
         var created = await _repository.CreateAsync(category);
@@ -48,6 +56,9 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryDto> UpdateAsync(int id, UpdateCategoryDto updateDto)
     {
+
+        var validationResult = await _updatedValidator.ValidateAsync(updateDto);
+        if(!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
 
         // 🔹 Buscar la entidad existente
         var existing = await _repository.GetByIdAsync(id);
