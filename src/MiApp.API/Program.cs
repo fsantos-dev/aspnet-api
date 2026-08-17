@@ -12,6 +12,9 @@ using System.Text;
 using MiApp.API.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using MiApp.Application.Mappings;
+using FluentValidation;
+using MiApp.Application.validators;
+using MiApp.Infrastructure.Services;
 
 //Esto es para hacer un commit de prueba y probar pull request
 
@@ -126,7 +129,16 @@ builder.Services.AddProblemDetails();
 // 3.4 Configurar AutoMapper (escanea los mappings/perfiles en la capa de aplicacion)
 builder.Services.AddAutoMapper(cfg => { }, typeof(UserProfile).Assembly);
 
+// 3.5 Configurar FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryDtoValidator>();
 
+// 3.5 configurar los servicios de infrastructura
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+//para obtener el user id del jwt
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // 4. Agregar CORS
 builder.Services.AddCors(options =>
 {
@@ -141,7 +153,7 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
-
+app.UseCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
 {
@@ -154,7 +166,7 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseCustomPipeline();
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

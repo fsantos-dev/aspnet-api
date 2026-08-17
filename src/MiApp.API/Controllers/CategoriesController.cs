@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using MiApp.Application.Dtos;
 using MiApp.Application.Interfaces;
-using Microsoft.AspNetCore.Authorization; // ⬅️ Importante: agregar este using
+using Microsoft.AspNetCore.Authorization;
+using MiApp.Domain.Entities;
+using System.Security.Claims; // ⬅️ Importante: agregar este using
 
 namespace MiApp.API.Controllers;
 
@@ -23,16 +25,23 @@ public class CategoriesController : ControllerBase
     // GET: api/categories
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<CategoryDto>> GetAll()
     {
-        var categories = await _categoryService.GetAllAsync();
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        var userId = int.Parse(userIdClaim.Value);
+        var categories = await _categoryService.GetAllAsync(userId);
         return Ok(categories);
     }
 
     // GET: api/categories/{id}
     [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<ActionResult<CategoryDto>> GetById(int id)
     {
         var category = await _categoryService.GetByIdAsync(id);
         return Ok(category);
@@ -40,30 +49,27 @@ public class CategoriesController : ControllerBase
 
     // POST: api/categories
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateCategoryDto createDto)
+    public async Task<ActionResult<CategoryDto>> Create(CreateCategoryDto createDto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
         var created = await _categoryService.CreateAsync(createDto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-
     }
 
     // PUT: api/categories/{id}
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryDto updateDto)
+    public async Task<ActionResult<CategoryDto>> Update(int id, UpdateCategoryDto updateDto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
         var updated = await _categoryService.UpdateAsync(id, updateDto);
         return Ok(updated);
-
     }
 
     // DELETE: api/categories/{id}
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult<CategoryDto>> Delete(int id)
     {
         await _categoryService.DeleteAsync(id);
         return NoContent();
     }
+
 
 }

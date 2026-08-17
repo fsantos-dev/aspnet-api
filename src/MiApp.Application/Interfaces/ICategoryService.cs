@@ -4,7 +4,7 @@ namespace MiApp.Application.Interfaces;
 
 public interface ICategoryService
 {
-    Task<IEnumerable<CategoryDto>> GetAllAsync();
+    Task<IEnumerable<CategoryDto>> GetAllAsync(int id);
     Task<CategoryDto> GetByIdAsync(int id);
     Task<CategoryDto> CreateAsync(CreateCategoryDto createDto);
     Task<CategoryDto> UpdateAsync(int id, UpdateCategoryDto updateDto);

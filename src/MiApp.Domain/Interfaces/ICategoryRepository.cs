@@ -4,7 +4,7 @@ namespace MiApp.Domain.Interfaces;
 
 public interface ICategoryRepository
 {
-    Task<IEnumerable<Category>> GetAllAsync();
+    Task<IEnumerable<Category>> GetAllAsync(int id);
     Task<Category?> GetByIdAsync(int id);
 
     Task<Category> CreateAsync(Category category);
