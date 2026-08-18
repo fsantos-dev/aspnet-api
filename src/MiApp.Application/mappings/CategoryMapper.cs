@@ -19,12 +19,13 @@ public static class CategoryMapper
     }
 
     // Los datos que envia el cliente
-    public static Category toEntity(CreateCategoryDto dto)
+    public static Category toEntity(CreateCategoryDto dto, int userId)
     {
         return new Category
         (
             dto.Name,
-            dto.Description
+            dto.Description,
+            userId
         );
     }
 }
