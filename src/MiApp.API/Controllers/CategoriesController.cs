@@ -24,23 +24,14 @@ public class CategoriesController : ControllerBase
 
     // GET: api/categories
     [HttpGet]
-    [AllowAnonymous]
     public async Task<ActionResult<CategoryDto>> GetAll()
     {
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-        if (userIdClaim == null)
-            return Unauthorized();
-
-        var userId = int.Parse(userIdClaim.Value);
-        var categories = await _categoryService.GetAllAsync(userId);
+        var categories = await _categoryService.GetAllAsync();
         return Ok(categories);
     }
 
     // GET: api/categories/{id}
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<ActionResult<CategoryDto>> GetById(int id)
     {
         var category = await _categoryService.GetByIdAsync(id);

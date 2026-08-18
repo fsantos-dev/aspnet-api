@@ -1,6 +1,6 @@
 namespace MiApp.Infrastructure.Services;
 
-using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using MiApp.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 public class CurrentUserService : ICurrentUserService{
@@ -16,7 +16,7 @@ public class CurrentUserService : ICurrentUserService{
     {
         get
         {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(JwtRegisteredClaimNames.Sub);
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
 
             if(userIdClaim == null){
                 throw new UnauthorizedAccessException();

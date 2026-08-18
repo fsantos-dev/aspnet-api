@@ -30,11 +30,12 @@ public class Category
     public User User { get; set;} = null!;
 
 
-     public Category(string name, string? description)
+     public Category(string name, string? description, int userId)
     {
         Rename(name);
         // Name = name;
         Description = description;
+        UserId =  userId;
     }
 
     public void Rename(string newName)

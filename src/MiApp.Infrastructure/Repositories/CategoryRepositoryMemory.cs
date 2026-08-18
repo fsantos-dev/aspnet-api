@@ -10,12 +10,12 @@ public class CategoryRepositoryMemory : ICategoryRepository
     private static List<Category> _categories = new();
     private static int _nextId = 1;
 
-    public Task<IEnumerable<Category>> GetAllAsync()
+    public Task<IEnumerable<Category>> GetAllAsync(int id)
     {
         return Task.FromResult(_categories.AsEnumerable());
     }
 
-    public Task<Category?> GetByIdAsync(int id)
+    public Task<Category?> GetByIdAsync(int id, int userId)
     {
         var category = _categories.FirstOrDefault(c => c.Id == id);
         return Task.FromResult(category);
@@ -28,7 +28,7 @@ public class CategoryRepositoryMemory : ICategoryRepository
         return Task.FromResult(category);
     }
 
-    public Task UpdateAsync(Category category)
+     public Task UpdateAsync(Category category)
     {
         var existing = _categories.FirstOrDefault(c => c.Id == category.Id);
         if(existing == null) return Task.FromResult<Category?>(null);

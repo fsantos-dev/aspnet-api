@@ -25,9 +25,9 @@ public class CategoryRepository : ICategoryRepository
     }
 
 
-    public async Task<Category?> GetByIdAsync(int id)
+    public async Task<Category?> GetByIdAsync(int id, int userId)
     {
-        return await _context.Categories.FindAsync(id);
+        return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
     }
 
     public async Task<Category> CreateAsync(Category category)

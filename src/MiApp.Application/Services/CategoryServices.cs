@@ -17,22 +17,27 @@ public class CategoryService : ICategoryService
     private readonly IValidator<CreateCategoryDto> _createValidator;
     private readonly IValidator<UpdateCategoryDto> _updatedValidator;
 
-    public CategoryService(ICategoryRepository repository, IValidator<CreateCategoryDto> createValidator, IValidator<UpdateCategoryDto> updateValidator)
+    private readonly ICurrentUserService _currentUserService;
+
+    public CategoryService(ICurrentUserService currentUserService, ICategoryRepository repository, IValidator<CreateCategoryDto> createValidator, IValidator<UpdateCategoryDto> updateValidator)
     {
         _repository = repository;
         _createValidator = createValidator;
         _updatedValidator = updateValidator;
+        _currentUserService = currentUserService;
     }
 
-    public async Task<IEnumerable<CategoryDto>> GetAllAsync(int id)
+    public async Task<IEnumerable<CategoryDto>> GetAllAsync()
     {
-        var categories = await _repository.GetAllAsync(id);
+        var userId = _currentUserService.UserId;
+        var categories = await _repository.GetAllAsync(userId);
         return categories.Select(c => CategoryMapper.toDto(c));
     }
 
     public async Task<CategoryDto> GetByIdAsync(int id)
     {
-        var category = await _repository.GetByIdAsync(id);
+        var userId = _currentUserService.UserId;
+        var category = await _repository.GetByIdAsync(id, userId);
         if (category is null) throw new KeyNotFoundException($"No se encontró la categoría con el ID {id}");
         return CategoryMapper.toDto(category);
     }
@@ -40,11 +45,13 @@ public class CategoryService : ICategoryService
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto createDto)
     {
 
+        var userId = _currentUserService.UserId;
         var validationResult = await _createValidator.ValidateAsync(createDto);
-        if(!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
+        if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
         var category = new Category(
             createDto.Name,
-            createDto.Description
+            createDto.Description,
+            userId
         );
 
 
@@ -57,11 +64,12 @@ public class CategoryService : ICategoryService
     public async Task<CategoryDto> UpdateAsync(int id, UpdateCategoryDto updateDto)
     {
 
+        var userId = _currentUserService.UserId;
         var validationResult = await _updatedValidator.ValidateAsync(updateDto);
-        if(!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
+        if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
 
         // 🔹 Buscar la entidad existente
-        var existing = await _repository.GetByIdAsync(id);
+        var existing = await _repository.GetByIdAsync(id, userId);
         if (existing == null) throw new KeyNotFoundException($"No se encontró la categoría con el ID {id}");
 
         // 🔹 Actualizar los campos permitidos
@@ -76,7 +84,8 @@ public class CategoryService : ICategoryService
 
     public async Task DeleteAsync(int id)
     {
-        var category = await _repository.GetByIdAsync(id);
+        var userId = _currentUserService.UserId;
+        var category = await _repository.GetByIdAsync(id, userId);
         if (category is null) throw new KeyNotFoundException($"No se encontró la categoría con el ID {id}");
         await _repository.DeleteAsync(id);
     }
