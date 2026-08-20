@@ -547,6 +547,186 @@ Cambiar estructura de una tabla enorme
         ↓
 🔴 Requiere planificación seria
 
+
+# 16. PRUEBAS UNITARIAS (xunit)
+- Moq 
+- FluentAssertions
+- [Fact] //es una prueba unitaria cada uno de estos 
+- Mock<ICategoryRepository>	Crea un objeto falso del repositorio que no usa la base de datos real.
+- Setup(...).ReturnsAsync(...)	Configura el mock para que devuelva una categoría predefinida cuando se llame a CreateAsync.
+- Verify(...)	Verifica que el repositorio fue llamado una vez, lo que confirma que el servicio delegó correctamente.
+- FluentAssertions	Permite escribir aserciones más legibles: result.Id.Should().Be(1)
+- Prueba de excepción	Verifica que el servicio lance una ArgumentException cuando el nombre está vacío.
+
+
+Pero CategoryService depende de otras cosas:
+
+CategoryService
+    │
+    ├── ICurrentUserService
+    ├── ICategoryRepository
+    ├── IValidator<CreateCategoryDto>
+    └── IValidator<UpdateCategoryDto>
+
+Si usamos las implementaciones reales, estaríamos probando muchas cosas simultáneamente.
+
+Por ejemplo:
+
+CategoryService
+     ↓
+Repository real
+     ↓
+SQL Server
+     ↓
+Base de datos
+
+Eso ya no sería un unit test puro.
+
+## Algo importante sobre Arrange / Act / Assert
+
+Cada [Fact] es una prueba completa y tiene su propio:
+
+Arrange : preparar los datos
+   ↓
+Act : ejecutar la accion 
+   ↓
+Assert : comprobar la accion o lo esperado
+
+
+3. ¿Qué hacemos con las dependencias?
+
+Las reemplazamos por mocks.
+
+Un mock es básicamente:
+
+"Una versión falsa de una dependencia que yo controlo durante el test."
+
+Por eso:
+
+Mock<ICategoryRepository>
+
+### FLUJO
+Estándar: AAA
+
+Toda prueba normalmente sigue:
+
+ARRANGE → ACT → ASSERT
+1. ARRANGE — ¿Qué necesito preparar?
+
+Hazte estas preguntas:
+
+1. ¿Qué método estoy probando?
+
+Ejemplo:
+
+UpdateAsync()
+
+2. ¿Qué datos necesita?
+
+Mira sus parámetros:
+
+id
+updateDto
+
+Entonces preparas esos datos.
+
+3. ¿Qué dependencias utiliza el método?
+
+Mira el constructor del servicio.
+
+Por ejemplo:
+
+ICurrentUserService
+ICategoryRepository
+IValidator
+
+Esas dependencias normalmente las conviertes en mocks.
+
+4. ¿Qué comportamiento necesito de cada dependencia para que el escenario sea exitoso?
+
+Por ejemplo:
+
+CurrentUserService → devuelve UserId = 5
+Validator          → dice "válido"
+Repository         → encuentra la categoría
+
+Aquí utilizas principalmente:
+
+Setup()
+2. ACT — ¿Qué estoy ejecutando?
+
+Hazte una sola pregunta:
+
+¿Cuál es exactamente la acción que quiero probar?
+
+Por ejemplo:
+
+UpdateAsync(id, updateDto)
+
+Ese es el centro de la prueba.
+
+Idealmente tienes una acción principal.
+
+3. ASSERT — ¿Qué espero que ocurra?
+
+Aquí tienes dos tipos de preguntas.
+
+A. ¿Qué resultado espero?
+
+Por ejemplo:
+
+¿El resultado existe?
+¿Tiene el ID correcto?
+¿Tiene el nuevo nombre?
+¿Tiene la nueva descripción?
+
+Usas:
+
+FluentAssertions
+
+como:
+
+result.Should()...
+B. ¿Qué interacciones espero?
+
+Pregúntate:
+
+¿Qué dependencias debería haber utilizado mi servicio?
+
+Por ejemplo:
+
+¿Buscó la categoría?
+¿La actualizó?
+¿Cuántas veces?
+
+Usas:
+
+Verify()
+
+Ejemplo conceptual:
+
+GetByIdAsync → Once
+UpdateAsync  → Once
+El ciclo de preguntas
+
+Cuando vayas a crear cualquier prueba exitosa, sigue este ciclo:
+
+1. ¿QUÉ ESTOY PROBANDO?
+        ↓
+2. ¿QUÉ NECESITA PARA FUNCIONAR?
+        ↓
+3. ¿QUÉ DATOS NECESITO?
+        ↓
+4. ¿QUÉ DEPENDENCIAS TIENE?
+        ↓
+5. ¿QUÉ DEBEN DEVOLVER ESAS DEPENDENCIAS?
+        ↓
+6. EJECUTO EL MÉTODO
+        ↓
+7. ¿QUÉ RESULTADO ESPERO?
+        ↓
+8. ¿QUÉ DEPENDENCIAS DEBIERON SER LLAMADAS?
+
 # 📌 Resumen
 
 | Tema | Opciones |
