@@ -767,9 +767,35 @@ normalemnte se tiene el compose loca con el que se crean las imagenes se suben a
 builder.Configuration toma las llaves no importan en donde esten en secretos locales o en vaules del servidor
 
 # 18. ejecutar los diferentes ambientes 
-$env:ASPNETCORE_ENVIRONMENT="Production" <-- ambiente a ejecutar
-dotnet run
+- $env:ASPNETCORE_ENVIRONMENT="Production" <-- ambiente a ejecutar
+- dotnet run
 
+# 19. Arquitectura de despliegue - ejecutar los diferentes ambientes  
+
+Sí, esa es la síntesis correcta y bien matizada:
+
+Capa	|  Despliegue típico	|     Notas
+Backend	|  Imagen Docker → Kubernetes/ECS/App Service	| Prácticamente sin excepción
+Frontend |	CDN (apps genéricas) o Docker/K8s (banca, fintech, alta seguridad)	| Depende del sector — en tu contexto bancario es más común verlo en Docker, junto al backend, por WAF/compliance
+BD	| Servicio administrado en la nube (RDS, Azure SQL, etc.)	| Casi nunca en Docker propio, por persistencia/backups/seguridad
+
+Y la pieza que amarra todo: docker-compose.yml sigue siendo solo para tu entorno de desarrollo local, sin importar cómo termine desplegado cada capa en producción.
+
+Con esto tienes un mapa mental bastante sólido y realista del panorama — más ajustado que la primera simplificación que te di. Si en algún momento quieres, podemos bajar esto a algo concreto: por ejemplo, escribir el Dockerfile del backend .NET de tu categories-app, o ver cómo se vería un pipeline básico de CI/CD que construya esa imagen.
+
+# 20 Kubernetes
+
+Docker = la caja donde empacas tu app (el contenedor)
+docker-compose = organizar unas pocas cajas en tu propia mesa (tu máquina local)
+Kubernetes = un almacén gigante automatizado que recibe miles de cajas, las distribuye en múltiples bodegas (servidores), repone las que se dañan, agrega más espacio cuando hace falta, y dirige a la gente hacia la caja correcta sin que tú intervengas manualmente
+
+# 21 balanceadores de carga
+
+Service → balancea tráfico dentro del clúster hacia los Pods.
+Ingress/Gateway → gestiona entrada HTTP/HTTPS y routing.
+Cloud Load Balancer → puede proporcionar el punto de entrada público desde Internet.
+
+Así que Kubernetes sí tiene balanceo, pero "Kubernetes tiene balanceador de carga" no significa necesariamente que ya tengas un balanceador público para Internet.
 
 # 📌 Resumen
 
