@@ -727,6 +727,50 @@ Cuando vayas a crear cualquier prueba exitosa, sigue este ciclo:
         ↓
 8. ¿QUÉ DEPENDENCIAS DEBIERON SER LLAMADAS?
 
+# 17. Docker
+1. Crear docker file
+2. Crear el compose con los servicios de la base de datos y la api(dockerfile)
+
+- al crear el compose con todas las credenciales de configuracion lo mejor es tener todas estas llaves en un vault y en el compose refereciarlo
+
+Dockerfile:
+
+¿Cómo construyo y ejecuto mi aplicación?
+
+Docker Compose:
+
+¿Qué servicios necesita mi sistema y cómo se conectan?
+
+1. Dónde ejecutas
+Ejecución	      |  API	     |  SQL Server	            |  Secretos
+Local sin Docker  |	Tu PC	     |  SQL Server de tu PC	    | User Secrets
+Docker local	  | Contenedor	 |  Contenedor              | .env
+Producción Docker | Contenedor	 |  Servidor/DB producción  | Vault
+
+Exactamente: appsettings.Production.json sigue siendo útil aunque no pongas secretos ahí.
+
+Su propósito es guardar configuración específica de producción que NO sea sensible. y los secretos en su forma correspondiente entonces compose o dotnet run ejecutaran el ambiente que le digamos pero los secretos los tomara de donde los tengamos
+
+## Comandos que más vas a usar
+docker build -t mi-app .        # construye una imagen desde el Dockerfile
+docker run -p 3000:3000 mi-app  # crea y corre un contenedor
+docker ps                       # lista contenedores corriendo
+docker images                   # lista imágenes descargadas
+docker stop <id>                # detiene un contenedor
+docker compose build            # Construir las imágenes    
+docker-compose up               # levanta todo lo definido en el compose
+docker compose up -d --build    # construir y levantar al tiempo
+
+normalemnte se tiene el compose loca con el que se crean las imagenes se suben a docker hub y alla se descargan en e servidor de prodccuion y con su propio compose levanta las imagenes
+
+
+builder.Configuration toma las llaves no importan en donde esten en secretos locales o en vaules del servidor
+
+# 18. ejecutar los diferentes ambientes 
+$env:ASPNETCORE_ENVIRONMENT="Production" <-- ambiente a ejecutar
+dotnet run
+
+
 # 📌 Resumen
 
 | Tema | Opciones |

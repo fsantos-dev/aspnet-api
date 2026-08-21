@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Servicio de SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: MiApp_SQLServer
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Mipassword123*
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - mi_app_network
+
+  # Servicio de la API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: MiApp_API
+    environment:
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION} 
+      - Jwt__SecretKey=${JWT_SECRET} 
+      - Jwt__Issuer=${JWT_ISSUER} 
+      - Jwt__Audience=${JWT_AUDIENCE} 
+      - Jwt__ExpiryMinutes=${JWT_EXPIRY_MINUTES} 
+      - ASPNETCORE_ENVIRONMENT=Production 
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - mi_app_network
+
+volumes:
+  sqlserver_data:
+
+networks:
+  mi_app_network:
+    driver: bridge
