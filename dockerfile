@@ -16,14 +16,15 @@ RUN dotnet restore src/MiApp.API/MiApp.API.csproj
 #4. copiar todo el codigo y compilar
 COPY . .
 WORKDIR /src/MiApp.API
-RUN dotnet build -c Release -o /app/build
+# RUN dotnet build -c Release -o /app/build
 
 #5. Publicar la aplicación
 #dotnet publish prepara tu aplicación para ser ejecutada fuera del entorno de desarrollo. 
 #Es decir, toma tu proyecto .NET y genera todos los archivos necesarios 
 #para desplegarlo en un servidor o dentro de un contenedor Docker.
+#no necesitamos donet build publish ya lo hace internamente
 FROM build AS publish
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish -c Release -o /app/publish 
 
 
 #7. Imagen final (runtime)
