@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vs
+.vscode
+bin
+obj
+tests
+*.user
+*.suo
+README.md
+git-flow.md
+health-check.md
+docker-compose.yml
+.env
