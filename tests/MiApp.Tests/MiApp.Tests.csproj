@@ -17,10 +17,21 @@
   </ItemGroup>
 
   <ItemGroup>
+  <FrameworkReference Include="Microsoft.AspNetCore.App" />
+</ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- <ItemGroup>
+    <ProjectReference Include="..\src\MiApp.API\MiApp.API.csproj" />
+    <ProjectReference Include="..\src\MiApp.Application\MiApp.Application.csproj" />
+    <ProjectReference Include="..\src\MiApp.Domain\MiApp.Domain.csproj" />
+</ItemGroup> -->
+
   <ItemGroup>
+  <ProjectReference Include="..\..\src\MiApp.API\MiApp.API.csproj" />
     <ProjectReference Include="..\..\src\MiApp.Application\MiApp.Application.csproj" />
     <ProjectReference Include="..\..\src\MiApp.Domain\MiApp.Domain.csproj" />
   </ItemGroup>
