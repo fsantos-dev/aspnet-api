@@ -30,5 +30,5 @@ steps:
   - task: PublishCodeCoverageResults@2
     displayName: 'Publish code coverage'
     inputs:
-      summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
       failIfCoverageEmpty: true  #Significa: Si los tests terminaron pero no encontramos ningún reporte de coverage, el pipeline debe fallar.
