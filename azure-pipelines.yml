@@ -1,0 +1,34 @@
+
+#Esto significa: Cuando haya un push a la rama develop, Azure DevOps ejecutará automáticamente este pipeline.
+trigger:
+  - develop
+
+#le estamos diciendo: "Ejecuta este pipeline en una máquina virtual de Ubuntu proporcionada por Azure DevOps."
+pool:
+  vmImage: 'ubuntu-latest'
+
+#steps es la lista de acciones que Azure DevOps va a ejecutar una detrás de otra en el agente Ubuntu.
+steps:
+  - script: dotnet restore #Esto descarga/resuelve las dependencias necesarias de nuestro .NET.
+    displayName: 'Restore dependencies' #Es simplemente el nombre que veremos en Azure DevOps en los logs
+
+  - script: dotnet build --no-restore
+    displayName: 'Build'
+
+  # - script: dotnet test --no-restore --no-build
+  #   displayName: 'Test'
+
+
+  #Nuestro dotnet test genera algo parecido a: coverage.cobertura.xml
+  - script: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage"
+    displayName: 'Test with coverage'
+
+
+  #pero el agente de Azure DevOps es temporal. 
+  #Si simplemente dejamos el archivo ahí, no tendríamos una forma cómoda de consultar el resultado después. 
+  #PublishCodeCoverageResults@2 le dice a Azure DevOps: "Toma este reporte de coverage y publícalo como resultado de esta ejecución del pipeline."
+  - task: PublishCodeCoverageResults@2
+    displayName: 'Publish code coverage'
+    inputs:
+      summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+      failIfCoverageEmpty: true  #Significa: Si los tests terminaron pero no encontramos ningún reporte de coverage, el pipeline debe fallar.
